@@ -27,9 +27,9 @@ const Index = () => {
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Internal Service Directory</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">JIRA Service Search</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Find the services you need across all departments. Start by searching for keywords like "laptop", "expenses", or "contract".
+            Find the services you need across JIRA departments. Start by searching for keywords like "laptop", "expenses", or "contract".
           </p>
         </div>
         
@@ -56,7 +56,7 @@ const Index = () => {
       
       <footer className="bg-white border-t border-gray-200 py-4">
         <div className="container mx-auto px-4 text-center text-gray-600 text-sm">
-          © {new Date().getFullYear()} Internal Service Directory | For company use only
+          © {new Date().getFullYear()} JIRA Service Search | For company use only
         </div>
       </footer>
     </div>

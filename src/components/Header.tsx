@@ -10,7 +10,7 @@ const Header: React.FC = () => {
     <header className="bg-background border-b border-border">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link to="/" className="text-xl font-semibold text-primary flex items-center gap-2">
-          <span>Internal Service Directory</span>
+          <span>JIRA Service Search</span>
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
