@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ChevronLeft, Plus, Trash, Edit, Search, FilterIcon, ExternalLink, Mail } from 'lucide-react';
+import { AlertCircle, ChevronLeft, Plus, Trash, Edit, Search, ExternalLink, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockDepartments } from '@/data/mockData';
 import { toast } from '@/components/ui/use-toast';
@@ -65,7 +65,6 @@ const Admin = () => {
     }
   };
   
-  // Helper functions for data management
   const addDepartment = () => {
     if (!newDepartmentName) {
       toast({
@@ -315,7 +314,6 @@ const Admin = () => {
     });
   };
   
-  // Helper functions to find objects by ID
   const getSelectedDepartment = () => departments.find(d => d.id === selectedDepartment);
   
   const getSelectedCategory = () => {
@@ -330,7 +328,6 @@ const Admin = () => {
     return cat.subcategories.find(s => s.id === selectedSubcategory);
   };
   
-  // Filter functions
   const filteredDepartments = departments.filter(dept => 
     !departmentFilter || dept.name.toLowerCase().includes(departmentFilter.toLowerCase())
   );
@@ -377,7 +374,6 @@ const Admin = () => {
     return allServices;
   };
   
-  // Filtered lists for the selected items
   const filteredCategories = selectedDepartment 
     ? getSelectedDepartment()?.categories.filter(cat => 
         !categoryFilter || cat.name.toLowerCase().includes(categoryFilter.toLowerCase())
@@ -446,7 +442,6 @@ const Admin = () => {
     );
   }
   
-  // Breadcrumb paths
   const getBreadcrumbPath = () => {
     const paths = [{ name: 'Admin', path: '/admin' }];
     
@@ -563,7 +558,6 @@ const Admin = () => {
             <TabsTrigger value="services">Services</TabsTrigger>
           </TabsList>
           
-          {/* Departments Tab */}
           <TabsContent value="departments" className="mt-6">
             <Card>
               <CardHeader>
@@ -653,7 +647,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
           
-          {/* Categories Tab */}
           <TabsContent value="categories" className="mt-6">
             <Card>
               <CardHeader>
@@ -787,7 +780,6 @@ const Admin = () => {
             </Card>
           </TabsContent>
           
-          {/* Subcategories Tab */}
           <TabsContent value="subcategories" className="mt-6">
             <Card>
               <CardHeader>
@@ -928,3 +920,141 @@ const Admin = () => {
                             value={newSubcategoryName}
                             onChange={(e) => setNewSubcategoryName(e.target.value)}
                             required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="subcat-desc">Description</Label>
+                          <Textarea 
+                            id="subcat-desc" 
+                            placeholder="Enter subcategory description" 
+                            value={newSubcategoryDesc}
+                            onChange={(e) => setNewSubcategoryDesc(e.target.value)}
+                          />
+                        </div>
+                        <Button type="submit">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Subcategory
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="services" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Manage Services</CardTitle>
+                <CardDescription>
+                  Add, edit, or remove services within subcategories
+                </CardDescription>
+                <div className="mt-2 relative">
+                  <Input
+                    placeholder="Filter services..."
+                    value={serviceFilter}
+                    onChange={(e) => setServiceFilter(e.target.value)}
+                    className="pl-9"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredServices.length > 0 ? (
+                    filteredServices.map((service) => (
+                      <div key={service.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-medium text-foreground">{service.name}</h3>
+                            <p className="text-sm text-muted-foreground">{service.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Link: {service.link || 'N/A'}
+                              <br />
+                              Contact Email: {service.contactEmail || 'N/A'}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                              onClick={() => deleteService(selectedDepartment, selectedCategory, selectedSubcategory, service.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center py-4 text-muted-foreground">
+                      {serviceFilter 
+                        ? "No services match your filter" 
+                        : "No services found in this subcategory. Create your first one below."}
+                    </p>
+                  )}
+                  
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-medium mb-4 text-foreground">Add New Service</h3>
+                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addService(); }}>
+                      <div className="grid gap-2">
+                        <Label htmlFor="service-name">Service Name</Label>
+                        <Input 
+                          id="service-name" 
+                          placeholder="Enter service name" 
+                          value={newServiceName}
+                          onChange={(e) => setNewServiceName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="service-desc">Description</Label>
+                        <Textarea 
+                          id="service-desc" 
+                          placeholder="Enter service description" 
+                          value={newServiceDesc}
+                          onChange={(e) => setNewServiceDesc(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="service-link">Link</Label>
+                        <Input 
+                          id="service-link" 
+                          placeholder="Enter service link" 
+                          value={newServiceLink}
+                          onChange={(e) => setNewServiceLink(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="service-email">Contact Email</Label>
+                        <Input 
+                          id="service-email" 
+                          placeholder="Enter contact email" 
+                          value={newServiceEmail}
+                          onChange={(e) => setNewServiceEmail(e.target.value)}
+                        />
+                      </div>
+                      <Button type="submit">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Service
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Admin;
