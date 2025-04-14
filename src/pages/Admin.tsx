@@ -11,6 +11,7 @@ import { AlertCircle, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockDepartments } from '@/data/mockData';
 import { toast } from '@/components/ui/use-toast';
+import Header from '@/components/Header';
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,7 +39,7 @@ const Admin = () => {
   
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-[350px]">
           <CardHeader>
             <CardTitle>Administrator Login</CardTitle>
@@ -74,7 +75,7 @@ const Admin = () => {
                 </div>
                 <Button type="submit" className="w-full">Login</Button>
                 <div className="mt-2">
-                  <Link to="/" className="text-sm text-brand-600 hover:text-brand-800 flex items-center">
+                  <Link to="/" className="text-sm text-primary hover:text-primary/80 flex items-center">
                     <ChevronLeft className="h-4 w-4 mr-1" /> Back to Directory
                   </Link>
                 </div>
@@ -87,12 +88,13 @@ const Admin = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Directory Administration</h1>
-            <p className="text-gray-600">Manage the service directory structure and content</p>
+            <h1 className="text-2xl font-bold text-foreground">Directory Administration</h1>
+            <p className="text-muted-foreground">Manage the service directory structure and content</p>
           </div>
           <div className="flex items-center gap-4">
             <Button 
@@ -118,7 +120,7 @@ const Admin = () => {
           </AlertDescription>
         </Alert>
         
-        <Tabs defaultValue="departments">
+        <Tabs defaultValue="departments" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="departments">Departments</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
@@ -137,15 +139,15 @@ const Admin = () => {
               <CardContent>
                 <div className="space-y-4">
                   {mockDepartments.map((dept) => (
-                    <div key={dept.id} className="p-4 border rounded-md">
+                    <div key={dept.id} className="p-4 border rounded-md border-border bg-card/50">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-medium">{dept.name}</h3>
-                          <p className="text-sm text-gray-600">{dept.description}</p>
+                          <h3 className="font-medium text-foreground">{dept.name}</h3>
+                          <p className="text-sm text-muted-foreground">{dept.description}</p>
                         </div>
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm">Edit</Button>
-                          <Button variant="outline" size="sm" className="text-red-500 border-red-200 hover:bg-red-50">
+                          <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10">
                             Delete
                           </Button>
                         </div>
@@ -153,8 +155,8 @@ const Admin = () => {
                     </div>
                   ))}
                   
-                  <div className="mt-6 pt-6 border-t">
-                    <h3 className="font-medium mb-4">Add New Department</h3>
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-medium mb-4 text-foreground">Add New Department</h3>
                     <form className="space-y-4">
                       <div className="grid gap-2">
                         <Label htmlFor="dept-name">Department Name</Label>
@@ -181,7 +183,7 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center py-12 text-gray-500">
+                <p className="text-center py-12 text-muted-foreground">
                   Select a department to manage its categories
                 </p>
               </CardContent>
@@ -197,7 +199,7 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center py-12 text-gray-500">
+                <p className="text-center py-12 text-muted-foreground">
                   Select a category to manage its subcategories
                 </p>
               </CardContent>
@@ -213,7 +215,7 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center py-12 text-gray-500">
+                <p className="text-center py-12 text-muted-foreground">
                   Select a subcategory to manage its services
                 </p>
               </CardContent>
