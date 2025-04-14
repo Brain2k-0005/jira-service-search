@@ -1,11 +1,19 @@
 
 import React, { useState } from 'react';
 import { Department } from '@/types/directory';
-import { ChevronRight, ExternalLink, Mail, ChevronDown } from 'lucide-react';
+import { ChevronRight, ExternalLink, Mail, ChevronDown, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { 
+  Breadcrumb, 
+  BreadcrumbItem, 
+  BreadcrumbLink, 
+  BreadcrumbList, 
+  BreadcrumbPage, 
+  BreadcrumbSeparator 
+} from '@/components/ui/breadcrumb';
 
 interface SearchResultsProps {
   results: {
@@ -104,6 +112,16 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, query }) => {
             
             {expandedDepartments[department.id] && (
               <>
+                <Breadcrumb className="ml-5 mb-2">
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink className="text-xs">
+                        <Folder className="h-3 w-3 mr-1 inline" />
+                        {department.name}
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
                 <p className="text-sm text-muted-foreground mb-3 ml-5">{department.description}</p>
 
                 {department.categories.map((category) => (
@@ -121,6 +139,22 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, query }) => {
                     
                     {expandedCategories[category.id] && (
                       <>
+                        <Breadcrumb className="ml-5 mb-2">
+                          <BreadcrumbList>
+                            <BreadcrumbItem>
+                              <BreadcrumbLink className="text-xs">
+                                <Folder className="h-3 w-3 mr-1 inline" />
+                                {department.name}
+                              </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                              <BreadcrumbLink className="text-xs">
+                                {category.name}
+                              </BreadcrumbLink>
+                            </BreadcrumbItem>
+                          </BreadcrumbList>
+                        </Breadcrumb>
                         <p className="text-sm text-muted-foreground ml-5 mb-2">{category.description}</p>
 
                         {category.subcategories.map((subcategory) => (
@@ -138,6 +172,28 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, query }) => {
                             
                             {expandedSubcategories[subcategory.id] && (
                               <>
+                                <Breadcrumb className="ml-5 mb-2">
+                                  <BreadcrumbList>
+                                    <BreadcrumbItem>
+                                      <BreadcrumbLink className="text-xs">
+                                        <Folder className="h-3 w-3 mr-1 inline" />
+                                        {department.name}
+                                      </BreadcrumbLink>
+                                    </BreadcrumbItem>
+                                    <BreadcrumbSeparator />
+                                    <BreadcrumbItem>
+                                      <BreadcrumbLink className="text-xs">
+                                        {category.name}
+                                      </BreadcrumbLink>
+                                    </BreadcrumbItem>
+                                    <BreadcrumbSeparator />
+                                    <BreadcrumbItem>
+                                      <BreadcrumbPage className="text-xs">
+                                        {subcategory.name}
+                                      </BreadcrumbPage>
+                                    </BreadcrumbItem>
+                                  </BreadcrumbList>
+                                </Breadcrumb>
                                 <p className="text-sm text-muted-foreground ml-5 mb-2">{subcategory.description}</p>
 
                                 <div className="ml-5">
