@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,19 +50,6 @@ const Admin = () => {
   // Initialize data
   useEffect(() => {
     setDepartments([...mockDepartments]);
-    
-    // Set default selections if departments exist
-    if (mockDepartments.length > 0) {
-      setSelectedDepartment(mockDepartments[0].id);
-      
-      if (mockDepartments[0].categories.length > 0) {
-        setSelectedCategory(mockDepartments[0].categories[0].id);
-        
-        if (mockDepartments[0].categories[0].subcategories.length > 0) {
-          setSelectedSubcategory(mockDepartments[0].categories[0].subcategories[0].id);
-        }
-      }
-    }
   }, []);
   
   const handleLogin = (e: React.FormEvent) => {
@@ -355,6 +341,48 @@ const Admin = () => {
     !departmentFilter || dept.name.toLowerCase().includes(departmentFilter.toLowerCase())
   );
   
+  const getAllCategories = () => {
+    const allCategories: { category: Category; department: Department }[] = [];
+    departments.forEach(dept => {
+      dept.categories.forEach(cat => {
+        if (!categoryFilter || cat.name.toLowerCase().includes(categoryFilter.toLowerCase())) {
+          allCategories.push({ category: cat, department: dept });
+        }
+      });
+    });
+    return allCategories;
+  };
+  
+  const getAllSubcategories = () => {
+    const allSubcategories: { subcategory: Subcategory; category: Category; department: Department }[] = [];
+    departments.forEach(dept => {
+      dept.categories.forEach(cat => {
+        cat.subcategories.forEach(subcat => {
+          if (!subcategoryFilter || subcat.name.toLowerCase().includes(subcategoryFilter.toLowerCase())) {
+            allSubcategories.push({ subcategory: subcat, category: cat, department: dept });
+          }
+        });
+      });
+    });
+    return allSubcategories;
+  };
+  
+  const getAllServices = () => {
+    const allServices: { service: Service; subcategory: Subcategory; category: Category; department: Department }[] = [];
+    departments.forEach(dept => {
+      dept.categories.forEach(cat => {
+        cat.subcategories.forEach(subcat => {
+          subcat.services.forEach(service => {
+            if (!serviceFilter || service.name.toLowerCase().includes(serviceFilter.toLowerCase())) {
+              allServices.push({ service, subcategory: subcat, category: cat, department: dept });
+            }
+          });
+        });
+      });
+    });
+    return allServices;
+  };
+  
   const filteredCategories = selectedDepartment 
     ? getSelectedDepartment()?.categories.filter(cat => 
         !categoryFilter || cat.name.toLowerCase().includes(categoryFilter.toLowerCase())
@@ -636,18 +664,28 @@ const Admin = () => {
                 <CardDescription>
                   Add, edit, or remove categories within departments
                 </CardDescription>
+                <div className="mt-2 relative">
+                  <Input
+                    placeholder="Filter categories..."
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="pl-9"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="mb-6">
-                  <Label htmlFor="select-department" className="block mb-2">Select Department</Label>
+                  <Label htmlFor="select-department" className="block mb-2">Select Department (Optional)</Label>
                   <Select 
                     value={selectedDepartment} 
                     onValueChange={setSelectedDepartment}
                   >
                     <SelectTrigger id="select-department" className="w-full">
-                      <SelectValue placeholder="Select a department" />
+                      <SelectValue placeholder="All departments" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">All departments</SelectItem>
                       {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                       ))}
@@ -655,92 +693,144 @@ const Admin = () => {
                   </Select>
                 </div>
                 
-                {selectedDepartment ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  {selectedDepartment ? (
+                    // Display categories for selected department
+                    <>
                       <h3 className="font-medium text-foreground">Categories in {getSelectedDepartment()?.name}</h3>
-                      <div className="relative w-64">
-                        <Input
-                          placeholder="Filter categories..."
-                          value={categoryFilter}
-                          onChange={(e) => setCategoryFilter(e.target.value)}
-                          className="pl-9"
-                        />
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                    
-                    {filteredCategories.length > 0 ? (
-                      filteredCategories.map((category) => (
-                        <div key={category.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-medium text-foreground">{category.name}</h3>
-                              <p className="text-sm text-muted-foreground">{category.description}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Contains {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                                onClick={() => deleteCategory(selectedDepartment, category.id)}
-                              >
-                                <Trash className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
+                      
+                      {filteredCategories.length > 0 ? (
+                        filteredCategories.map((category) => (
+                          <div key={category.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                            <Breadcrumb className="mb-2 text-xs">
+                              <BreadcrumbList>
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{getSelectedDepartment()?.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{category.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                              </BreadcrumbList>
+                            </Breadcrumb>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-medium text-foreground">{category.name}</h3>
+                                <p className="text-sm text-muted-foreground">{category.description}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Contains {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm">
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                                  onClick={() => deleteCategory(selectedDepartment, category.id)}
+                                >
+                                  <Trash className="h-4 w-4 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-center py-4 text-muted-foreground">
-                        {categoryFilter 
-                          ? "No categories match your filter" 
-                          : "No categories found in this department. Create your first one below."}
-                      </p>
-                    )}
-                    
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <h3 className="font-medium mb-4 text-foreground">Add New Category</h3>
-                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addCategory(); }}>
-                        <div className="grid gap-2">
-                          <Label htmlFor="cat-name">Category Name</Label>
-                          <Input 
-                            id="cat-name" 
-                            placeholder="Enter category name" 
-                            value={newCategoryName}
-                            onChange={(e) => setNewCategoryName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="cat-desc">Description</Label>
-                          <Textarea 
-                            id="cat-desc" 
-                            placeholder="Enter category description" 
-                            value={newCategoryDesc}
-                            onChange={(e) => setNewCategoryDesc(e.target.value)}
-                          />
-                        </div>
-                        <Button type="submit">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Category
-                        </Button>
-                      </form>
-                    </div>
+                        ))
+                      ) : (
+                        <p className="text-center py-4 text-muted-foreground">
+                          {categoryFilter 
+                            ? "No categories match your filter" 
+                            : "No categories found in this department. Create your first one below."}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    // Display all categories from all departments when no department is selected
+                    <>
+                      <h3 className="font-medium text-foreground">All Categories</h3>
+                      
+                      {getAllCategories().length > 0 ? (
+                        getAllCategories().map(({ category, department }) => (
+                          <div key={category.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                            <Breadcrumb className="mb-2 text-xs">
+                              <BreadcrumbList>
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{department.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{category.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                              </BreadcrumbList>
+                            </Breadcrumb>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-medium text-foreground">{category.name}</h3>
+                                <p className="text-sm text-muted-foreground">{category.description}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Department: {department.name} | Contains {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm">
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                                  onClick={() => deleteCategory(department.id, category.id)}
+                                >
+                                  <Trash className="h-4 w-4 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center py-4 text-muted-foreground">
+                          {categoryFilter 
+                            ? "No categories match your filter" 
+                            : "No categories found. Create your first one below."}
+                        </p>
+                      )}
+                    </>
+                  )}
+                  
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="font-medium mb-4 text-foreground">Add New Category</h3>
+                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addCategory(); }}>
+                      <div className="grid gap-2">
+                        <Label htmlFor="cat-name">Category Name</Label>
+                        <Input 
+                          id="cat-name" 
+                          placeholder="Enter category name" 
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="cat-desc">Description</Label>
+                        <Textarea 
+                          id="cat-desc" 
+                          placeholder="Enter category description" 
+                          value={newCategoryDesc}
+                          onChange={(e) => setNewCategoryDesc(e.target.value)}
+                        />
+                      </div>
+                      <Button type="submit">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Category
+                      </Button>
+                    </form>
                   </div>
-                ) : (
-                  <p className="text-center py-12 text-muted-foreground">
-                    Select a department to manage its categories
-                  </p>
-                )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -752,28 +842,34 @@ const Admin = () => {
                 <CardDescription>
                   Add, edit, or remove subcategories within categories
                 </CardDescription>
+                <div className="mt-2 relative">
+                  <Input
+                    placeholder="Filter subcategories..."
+                    value={subcategoryFilter}
+                    onChange={(e) => setSubcategoryFilter(e.target.value)}
+                    className="pl-9"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <Label htmlFor="select-department-sub" className="block mb-2">Select Department</Label>
+                    <Label htmlFor="select-department-sub" className="block mb-2">Select Department (Optional)</Label>
                     <Select 
                       value={selectedDepartment} 
                       onValueChange={(value) => {
                         setSelectedDepartment(value);
-                        // Get first category if available
-                        const dept = departments.find(d => d.id === value);
-                        if (dept && dept.categories.length > 0) {
-                          setSelectedCategory(dept.categories[0].id);
-                        } else {
-                          setSelectedCategory('');
-                        }
+                        // Reset category selection if department changes
+                        setSelectedCategory('');
+                        setSelectedSubcategory('');
                       }}
                     >
                       <SelectTrigger id="select-department-sub" className="w-full">
-                        <SelectValue placeholder="Select a department" />
+                        <SelectValue placeholder="All departments" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">All departments</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                         ))}
@@ -783,183 +879,20 @@ const Admin = () => {
                   
                   {selectedDepartment && (
                     <div>
-                      <Label htmlFor="select-category" className="block mb-2">Select Category</Label>
-                      <Select 
-                        value={selectedCategory} 
-                        onValueChange={setSelectedCategory}
-                      >
-                        <SelectTrigger id="select-category" className="w-full">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getSelectedDepartment()?.categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-                
-                {selectedDepartment && selectedCategory ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-foreground">
-                        Subcategories in {getSelectedCategory()?.name}
-                      </h3>
-                      <div className="relative w-64">
-                        <Input
-                          placeholder="Filter subcategories..."
-                          value={subcategoryFilter}
-                          onChange={(e) => setSubcategoryFilter(e.target.value)}
-                          className="pl-9"
-                        />
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                    
-                    {filteredSubcategories.length > 0 ? (
-                      filteredSubcategories.map((subcategory) => (
-                        <div key={subcategory.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-medium text-foreground">{subcategory.name}</h3>
-                              <p className="text-sm text-muted-foreground">{subcategory.description}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Contains {subcategory.services.length} {subcategory.services.length === 1 ? 'service' : 'services'}
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                                onClick={() => deleteSubcategory(selectedDepartment, selectedCategory, subcategory.id)}
-                              >
-                                <Trash className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-center py-4 text-muted-foreground">
-                        {subcategoryFilter 
-                          ? "No subcategories match your filter" 
-                          : "No subcategories found in this category. Create your first one below."}
-                      </p>
-                    )}
-                    
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <h3 className="font-medium mb-4 text-foreground">Add New Subcategory</h3>
-                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addSubcategory(); }}>
-                        <div className="grid gap-2">
-                          <Label htmlFor="subcat-name">Subcategory Name</Label>
-                          <Input 
-                            id="subcat-name" 
-                            placeholder="Enter subcategory name" 
-                            value={newSubcategoryName}
-                            onChange={(e) => setNewSubcategoryName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="subcat-desc">Description</Label>
-                          <Textarea 
-                            id="subcat-desc" 
-                            placeholder="Enter subcategory description" 
-                            value={newSubcategoryDesc}
-                            onChange={(e) => setNewSubcategoryDesc(e.target.value)}
-                          />
-                        </div>
-                        <Button type="submit">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Subcategory
-                        </Button>
-                      </form>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center py-12 text-muted-foreground">
-                    Select a department and category to manage subcategories
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="services" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Services</CardTitle>
-                <CardDescription>
-                  Add, edit, or remove services within subcategories
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <Label htmlFor="select-department-serv" className="block mb-2">Select Department</Label>
-                    <Select 
-                      value={selectedDepartment} 
-                      onValueChange={(value) => {
-                        setSelectedDepartment(value);
-                        // Get first category if available
-                        const dept = departments.find(d => d.id === value);
-                        if (dept && dept.categories.length > 0) {
-                          setSelectedCategory(dept.categories[0].id);
-                          
-                          // Get first subcategory if available
-                          if (dept.categories[0].subcategories.length > 0) {
-                            setSelectedSubcategory(dept.categories[0].subcategories[0].id);
-                          } else {
-                            setSelectedSubcategory('');
-                          }
-                        } else {
-                          setSelectedCategory('');
-                          setSelectedSubcategory('');
-                        }
-                      }}
-                    >
-                      <SelectTrigger id="select-department-serv" className="w-full">
-                        <SelectValue placeholder="Select a department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {selectedDepartment && (
-                    <div>
-                      <Label htmlFor="select-category-serv" className="block mb-2">Select Category</Label>
+                      <Label htmlFor="select-category" className="block mb-2">Select Category (Optional)</Label>
                       <Select 
                         value={selectedCategory} 
                         onValueChange={(value) => {
                           setSelectedCategory(value);
-                          // Get first subcategory if available
-                          const dept = getSelectedDepartment();
-                          if (dept) {
-                            const cat = dept.categories.find(c => c.id === value);
-                            if (cat && cat.subcategories.length > 0) {
-                              setSelectedSubcategory(cat.subcategories[0].id);
-                            } else {
-                              setSelectedSubcategory('');
-                            }
-                          }
+                          // Reset subcategory selection if category changes
+                          setSelectedSubcategory('');
                         }}
                       >
-                        <SelectTrigger id="select-category-serv" className="w-full">
-                          <SelectValue placeholder="Select a category" />
+                        <SelectTrigger id="select-category" className="w-full">
+                          <SelectValue placeholder="All categories" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">All categories</SelectItem>
                           {getSelectedDepartment()?.categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                           ))}
@@ -967,143 +900,30 @@ const Admin = () => {
                       </Select>
                     </div>
                   )}
-                  
-                  {selectedDepartment && selectedCategory && (
-                    <div>
-                      <Label htmlFor="select-subcategory" className="block mb-2">Select Subcategory</Label>
-                      <Select 
-                        value={selectedSubcategory} 
-                        onValueChange={setSelectedSubcategory}
-                      >
-                        <SelectTrigger id="select-subcategory" className="w-full">
-                          <SelectValue placeholder="Select a subcategory" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getSelectedCategory()?.subcategories.map((subcat) => (
-                            <SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
                 </div>
                 
-                {selectedDepartment && selectedCategory && selectedSubcategory ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  {selectedDepartment && selectedCategory ? (
+                    // Display subcategories for selected category
+                    <>
                       <h3 className="font-medium text-foreground">
-                        Services in {getSelectedSubcategory()?.name}
+                        Subcategories in {getSelectedCategory()?.name}
                       </h3>
-                      <div className="relative w-64">
-                        <Input
-                          placeholder="Filter services..."
-                          value={serviceFilter}
-                          onChange={(e) => setServiceFilter(e.target.value)}
-                          className="pl-9"
-                        />
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                    
-                    {filteredServices.length > 0 ? (
-                      filteredServices.map((service) => (
-                        <div key={service.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-medium text-foreground">{service.name}</h3>
-                              <p className="text-sm text-muted-foreground">{service.description}</p>
-                              {(service.link || service.contactEmail) && (
-                                <div className="text-xs text-muted-foreground mt-1 space-y-1">
-                                  {service.link && <p>Link: {service.link}</p>}
-                                  {service.contactEmail && <p>Contact: {service.contactEmail}</p>}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                                onClick={() => deleteService(selectedDepartment, selectedCategory, selectedSubcategory, service.id)}
-                              >
-                                <Trash className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-center py-4 text-muted-foreground">
-                        {serviceFilter 
-                          ? "No services match your filter" 
-                          : "No services found in this subcategory. Create your first one below."}
-                      </p>
-                    )}
-                    
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <h3 className="font-medium mb-4 text-foreground">Add New Service</h3>
-                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addService(); }}>
-                        <div className="grid gap-2">
-                          <Label htmlFor="service-name">Service Name</Label>
-                          <Input 
-                            id="service-name" 
-                            placeholder="Enter service name" 
-                            value={newServiceName}
-                            onChange={(e) => setNewServiceName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="service-desc">Description</Label>
-                          <Textarea 
-                            id="service-desc" 
-                            placeholder="Enter service description" 
-                            value={newServiceDesc}
-                            onChange={(e) => setNewServiceDesc(e.target.value)}
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="service-link">Service Link (optional)</Label>
-                          <Input 
-                            id="service-link" 
-                            placeholder="https://example.com/service" 
-                            value={newServiceLink}
-                            onChange={(e) => setNewServiceLink(e.target.value)}
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="service-email">Contact Email (optional)</Label>
-                          <Input 
-                            id="service-email" 
-                            placeholder="service@example.com" 
-                            value={newServiceEmail}
-                            onChange={(e) => setNewServiceEmail(e.target.value)}
-                          />
-                        </div>
-                        <Button type="submit">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Service
-                        </Button>
-                      </form>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center py-12 text-muted-foreground">
-                    Select a department, category, and subcategory to manage services
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  );
-};
-
-export default Admin;
+                      
+                      {filteredSubcategories.length > 0 ? (
+                        filteredSubcategories.map((subcategory) => (
+                          <div key={subcategory.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                            <Breadcrumb className="mb-2 text-xs">
+                              <BreadcrumbList>
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{getSelectedDepartment()?.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{getSelectedCategory()?.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                  <BreadcrumbPage>{subcategory.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                              </Breadcrumb
