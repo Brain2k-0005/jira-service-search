@@ -1,8 +1,6 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Shield } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const Header: React.FC = () => {
@@ -14,12 +12,6 @@ const Header: React.FC = () => {
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link to="/admin">
-            <Button variant="ghost" size="sm" className="text-muted-foreground gap-1">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Admin</span>
-            </Button>
-          </Link>
         </div>
       </div>
     </header>

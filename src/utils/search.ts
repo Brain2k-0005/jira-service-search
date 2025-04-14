@@ -12,31 +12,86 @@ export function searchServices(query: string): SearchResult {
   let totalMatches = 0;
   
   // Helper function to check if text contains any of the search terms
-  // Improved to better match exact phrases and prioritize full matches
+  // Enhanced search algorithm with better matching and relevance scoring
   const textMatches = (text: string): { matched: boolean; score: number } => {
+    if (!text) return { matched: false, score: 0 };
+    
     const lowerText = text.toLowerCase();
     
     // Check for exact phrase match first (highest priority)
+    if (lowerText === query.toLowerCase()) {
+      return { matched: true, score: 10 }; // Perfect match gets highest score
+    }
+    
+    // Check if text starts with the query (high priority)
+    if (lowerText.startsWith(query.toLowerCase())) {
+      return { matched: true, score: 8 };
+    }
+    
+    // Check for exact phrase match (high priority)
     if (lowerText.includes(query.toLowerCase())) {
-      return { matched: true, score: 3 }; // Higher score for exact phrase match
+      return { matched: true, score: 6 };
+    }
+    
+    // Check for all terms appearing in order (medium-high priority)
+    let allTermsInOrder = true;
+    let lastIndex = -1;
+    for (const term of searchTerms) {
+      const index = lowerText.indexOf(term);
+      if (index === -1 || index < lastIndex) {
+        allTermsInOrder = false;
+        break;
+      }
+      lastIndex = index;
+    }
+    
+    if (allTermsInOrder) {
+      return { matched: true, score: 5 };
     }
     
     // Check for all terms appearing (medium priority)
     const allTermsMatch = searchTerms.every(term => lowerText.includes(term));
     if (allTermsMatch) {
-      return { matched: true, score: 2 }; // Medium score for all terms
+      return { matched: true, score: 4 };
+    }
+    
+    // Count how many terms match for partial scoring
+    const matchingTerms = searchTerms.filter(term => lowerText.includes(term));
+    const matchRatio = matchingTerms.length / searchTerms.length;
+    
+    // If more than half the terms match, consider it a partial match
+    if (matchRatio >= 0.5) {
+      return { matched: true, score: 3 * matchRatio };
     }
     
     // Check for any terms appearing (lowest priority)
     const anyTermMatch = searchTerms.some(term => lowerText.includes(term));
     if (anyTermMatch) {
-      return { matched: true, score: 1 }; // Lower score for partial matches
+      return { matched: true, score: 1 };
+    }
+    
+    // Word proximity scoring - check if terms appear close to each other
+    if (searchTerms.length > 1) {
+      const words = lowerText.split(/\s+/);
+      let proximity = false;
+      
+      for (let i = 0; i < words.length - 1; i++) {
+        if (searchTerms.some(term => words[i].includes(term)) && 
+            searchTerms.some(term => words[i+1].includes(term))) {
+          proximity = true;
+          break;
+        }
+      }
+      
+      if (proximity) {
+        return { matched: true, score: 2 };
+      }
     }
     
     return { matched: false, score: 0 };
   };
 
-  // Deep clone and filter the departments structure
+  // Deep clone and filter the departments structure with improved relevance scoring
   const filteredDepartments = mockDepartments
     .map(department => {
       // Check department name and description
@@ -119,6 +174,19 @@ export function searchServices(query: string): SearchResult {
       return null;
     })
     .filter(Boolean) as Department[];
+
+  // Sort the departments by relevance score
+  filteredDepartments.sort((a, b) => {
+    const scoreA = Math.max(
+      textMatches(a.name).score, 
+      textMatches(a.description).score
+    );
+    const scoreB = Math.max(
+      textMatches(b.name).score, 
+      textMatches(b.description).score
+    );
+    return scoreB - scoreA;
+  });
 
   return { 
     departments: filteredDepartments,

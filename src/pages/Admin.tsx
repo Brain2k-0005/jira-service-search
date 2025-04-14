@@ -7,26 +7,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ChevronLeft, Plus, Trash, Edit } from 'lucide-react';
+import { AlertCircle, ChevronLeft, Plus, Trash, Edit, Search, FilterIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockDepartments } from '@/data/mockData';
 import { toast } from '@/components/ui/use-toast';
 import Header from '@/components/Header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Department, Category, Subcategory, Service } from '@/types/directory';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   
-  // Daten-State
+  // Data state
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   
-  // Formular-State
+  // Filter state
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [subcategoryFilter, setSubcategoryFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('');
+  
+  // Form state
   const [newDepartmentName, setNewDepartmentName] = useState('');
   const [newDepartmentDesc, setNewDepartmentDesc] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -38,9 +45,25 @@ const Admin = () => {
   const [newServiceLink, setNewServiceLink] = useState('');
   const [newServiceEmail, setNewServiceEmail] = useState('');
   
-  // Initialisierung der Daten
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('departments');
+  
+  // Initialize data
   useEffect(() => {
     setDepartments([...mockDepartments]);
+    
+    // Set default selections if departments exist
+    if (mockDepartments.length > 0) {
+      setSelectedDepartment(mockDepartments[0].id);
+      
+      if (mockDepartments[0].categories.length > 0) {
+        setSelectedCategory(mockDepartments[0].categories[0].id);
+        
+        if (mockDepartments[0].categories[0].subcategories.length > 0) {
+          setSelectedSubcategory(mockDepartments[0].categories[0].subcategories[0].id);
+        }
+      }
+    }
   }, []);
   
   const handleLogin = (e: React.FormEvent) => {
@@ -62,7 +85,7 @@ const Admin = () => {
     }
   };
   
-  // Hilfsfunktionen für Datenverwaltung
+  // Helper functions for data management
   const addDepartment = () => {
     if (!newDepartmentName) {
       toast({
@@ -312,7 +335,7 @@ const Admin = () => {
     });
   };
   
-  // Hilfsfunktionen zum Finden von Objekten anhand der ID
+  // Helper functions to find objects by ID
   const getSelectedDepartment = () => departments.find(d => d.id === selectedDepartment);
   
   const getSelectedCategory = () => {
@@ -326,6 +349,29 @@ const Admin = () => {
     if (!cat) return null;
     return cat.subcategories.find(s => s.id === selectedSubcategory);
   };
+  
+  // Filter functions
+  const filteredDepartments = departments.filter(dept => 
+    !departmentFilter || dept.name.toLowerCase().includes(departmentFilter.toLowerCase())
+  );
+  
+  const filteredCategories = selectedDepartment 
+    ? getSelectedDepartment()?.categories.filter(cat => 
+        !categoryFilter || cat.name.toLowerCase().includes(categoryFilter.toLowerCase())
+      ) || []
+    : [];
+  
+  const filteredSubcategories = selectedCategory
+    ? getSelectedCategory()?.subcategories.filter(subcat => 
+        !subcategoryFilter || subcat.name.toLowerCase().includes(subcategoryFilter.toLowerCase())
+      ) || []
+    : [];
+  
+  const filteredServices = selectedSubcategory
+    ? getSelectedSubcategory()?.services.filter(service => 
+        !serviceFilter || service.name.toLowerCase().includes(serviceFilter.toLowerCase())
+      ) || []
+    : [];
   
   if (!isAuthenticated) {
     return (
@@ -377,6 +423,55 @@ const Admin = () => {
     );
   }
   
+  // Breadcrumb paths
+  const getBreadcrumbPath = () => {
+    const paths = [{ name: 'Admin', path: '/admin' }];
+    
+    if (activeTab === 'departments') {
+      paths.push({ name: 'Departments', path: '/admin/departments' });
+    } else if (activeTab === 'categories') {
+      paths.push({ name: 'Categories', path: '/admin/categories' });
+      if (selectedDepartment) {
+        const dept = getSelectedDepartment();
+        if (dept) paths.push({ name: dept.name, path: `/admin/categories/${dept.id}` });
+      }
+    } else if (activeTab === 'subcategories') {
+      paths.push({ name: 'Subcategories', path: '/admin/subcategories' });
+      if (selectedDepartment) {
+        const dept = getSelectedDepartment();
+        if (dept) {
+          paths.push({ name: dept.name, path: `/admin/subcategories/${dept.id}` });
+          if (selectedCategory) {
+            const cat = getSelectedCategory();
+            if (cat) paths.push({ name: cat.name, path: `/admin/subcategories/${dept.id}/${cat.id}` });
+          }
+        }
+      }
+    } else if (activeTab === 'services') {
+      paths.push({ name: 'Services', path: '/admin/services' });
+      if (selectedDepartment) {
+        const dept = getSelectedDepartment();
+        if (dept) {
+          paths.push({ name: dept.name, path: `/admin/services/${dept.id}` });
+          if (selectedCategory) {
+            const cat = getSelectedCategory();
+            if (cat) {
+              paths.push({ name: cat.name, path: `/admin/services/${dept.id}/${cat.id}` });
+              if (selectedSubcategory) {
+                const subcat = getSelectedSubcategory();
+                if (subcat) paths.push({ name: subcat.name, path: `/admin/services/${dept.id}/${cat.id}/${subcat.id}` });
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return paths;
+  };
+  
+  const breadcrumbPaths = getBreadcrumbPath();
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -402,6 +497,28 @@ const Admin = () => {
           </div>
         </div>
         
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            {breadcrumbPaths.map((path, index) => (
+              <React.Fragment key={path.path}>
+                {index < breadcrumbPaths.length - 1 ? (
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={path.path}>{path.name}</BreadcrumbLink>
+                  </BreadcrumbItem>
+                ) : (
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{path.name}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                )}
+                
+                {index < breadcrumbPaths.length - 1 && (
+                  <BreadcrumbSeparator />
+                )}
+              </React.Fragment>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
+        
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Demo Mode</AlertTitle>
@@ -410,7 +527,12 @@ const Admin = () => {
           </AlertDescription>
         </Alert>
         
-        <Tabs defaultValue="departments" className="w-full">
+        <Tabs 
+          defaultValue="departments" 
+          className="w-full"
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="departments">Departments</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
@@ -425,37 +547,54 @@ const Admin = () => {
                 <CardDescription>
                   Add, edit, or remove departments from the directory
                 </CardDescription>
+                <div className="mt-2 relative">
+                  <Input
+                    placeholder="Filter departments..."
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    className="pl-9"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {departments.map((dept) => (
-                    <div key={dept.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-medium text-foreground">{dept.name}</h3>
-                          <p className="text-sm text-muted-foreground">{dept.description}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Contains {dept.categories.length} {dept.categories.length === 1 ? 'category' : 'categories'}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                            onClick={() => deleteDepartment(dept.id)}
-                          >
-                            <Trash className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
+                  {filteredDepartments.length > 0 ? (
+                    filteredDepartments.map((dept) => (
+                      <div key={dept.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-medium text-foreground">{dept.name}</h3>
+                            <p className="text-sm text-muted-foreground">{dept.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Contains {dept.categories.length} {dept.categories.length === 1 ? 'category' : 'categories'}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                              onClick={() => deleteDepartment(dept.id)}
+                            >
+                              <Trash className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-center py-4 text-muted-foreground">
+                      {departmentFilter 
+                        ? "No departments match your filter" 
+                        : "No departments found. Create your first one below."}
+                    </p>
+                  )}
                   
                   <div className="mt-6 pt-6 border-t border-border">
                     <h3 className="font-medium mb-4 text-foreground">Add New Department</h3>
@@ -518,36 +657,55 @@ const Admin = () => {
                 
                 {selectedDepartment ? (
                   <div className="space-y-4">
-                    <h3 className="font-medium text-foreground">Categories in {getSelectedDepartment()?.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-foreground">Categories in {getSelectedDepartment()?.name}</h3>
+                      <div className="relative w-64">
+                        <Input
+                          placeholder="Filter categories..."
+                          value={categoryFilter}
+                          onChange={(e) => setCategoryFilter(e.target.value)}
+                          className="pl-9"
+                        />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
                     
-                    {getSelectedDepartment()?.categories.map((category) => (
-                      <div key={category.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-medium text-foreground">{category.name}</h3>
-                            <p className="text-sm text-muted-foreground">{category.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Contains {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                              onClick={() => deleteCategory(selectedDepartment, category.id)}
-                            >
-                              <Trash className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((category) => (
+                        <div key={category.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-medium text-foreground">{category.name}</h3>
+                              <p className="text-sm text-muted-foreground">{category.description}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Contains {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                                onClick={() => deleteCategory(selectedDepartment, category.id)}
+                              >
+                                <Trash className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-center py-4 text-muted-foreground">
+                        {categoryFilter 
+                          ? "No categories match your filter" 
+                          : "No categories found in this department. Create your first one below."}
+                      </p>
+                    )}
                     
                     <div className="mt-6 pt-6 border-t border-border">
                       <h3 className="font-medium mb-4 text-foreground">Add New Category</h3>
@@ -603,7 +761,13 @@ const Admin = () => {
                       value={selectedDepartment} 
                       onValueChange={(value) => {
                         setSelectedDepartment(value);
-                        setSelectedCategory('');
+                        // Get first category if available
+                        const dept = departments.find(d => d.id === value);
+                        if (dept && dept.categories.length > 0) {
+                          setSelectedCategory(dept.categories[0].id);
+                        } else {
+                          setSelectedCategory('');
+                        }
                       }}
                     >
                       <SelectTrigger id="select-department-sub" className="w-full">
@@ -639,38 +803,57 @@ const Admin = () => {
                 
                 {selectedDepartment && selectedCategory ? (
                   <div className="space-y-4">
-                    <h3 className="font-medium text-foreground">
-                      Subcategories in {getSelectedCategory()?.name}
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-foreground">
+                        Subcategories in {getSelectedCategory()?.name}
+                      </h3>
+                      <div className="relative w-64">
+                        <Input
+                          placeholder="Filter subcategories..."
+                          value={subcategoryFilter}
+                          onChange={(e) => setSubcategoryFilter(e.target.value)}
+                          className="pl-9"
+                        />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
                     
-                    {getSelectedCategory()?.subcategories.map((subcategory) => (
-                      <div key={subcategory.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-medium text-foreground">{subcategory.name}</h3>
-                            <p className="text-sm text-muted-foreground">{subcategory.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Contains {subcategory.services.length} {subcategory.services.length === 1 ? 'service' : 'services'}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                              onClick={() => deleteSubcategory(selectedDepartment, selectedCategory, subcategory.id)}
-                            >
-                              <Trash className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
+                    {filteredSubcategories.length > 0 ? (
+                      filteredSubcategories.map((subcategory) => (
+                        <div key={subcategory.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-medium text-foreground">{subcategory.name}</h3>
+                              <p className="text-sm text-muted-foreground">{subcategory.description}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Contains {subcategory.services.length} {subcategory.services.length === 1 ? 'service' : 'services'}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                                onClick={() => deleteSubcategory(selectedDepartment, selectedCategory, subcategory.id)}
+                              >
+                                <Trash className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-center py-4 text-muted-foreground">
+                        {subcategoryFilter 
+                          ? "No subcategories match your filter" 
+                          : "No subcategories found in this category. Create your first one below."}
+                      </p>
+                    )}
                     
                     <div className="mt-6 pt-6 border-t border-border">
                       <h3 className="font-medium mb-4 text-foreground">Add New Subcategory</h3>
@@ -726,8 +909,21 @@ const Admin = () => {
                       value={selectedDepartment} 
                       onValueChange={(value) => {
                         setSelectedDepartment(value);
-                        setSelectedCategory('');
-                        setSelectedSubcategory('');
+                        // Get first category if available
+                        const dept = departments.find(d => d.id === value);
+                        if (dept && dept.categories.length > 0) {
+                          setSelectedCategory(dept.categories[0].id);
+                          
+                          // Get first subcategory if available
+                          if (dept.categories[0].subcategories.length > 0) {
+                            setSelectedSubcategory(dept.categories[0].subcategories[0].id);
+                          } else {
+                            setSelectedSubcategory('');
+                          }
+                        } else {
+                          setSelectedCategory('');
+                          setSelectedSubcategory('');
+                        }
                       }}
                     >
                       <SelectTrigger id="select-department-serv" className="w-full">
@@ -748,7 +944,16 @@ const Admin = () => {
                         value={selectedCategory} 
                         onValueChange={(value) => {
                           setSelectedCategory(value);
-                          setSelectedSubcategory('');
+                          // Get first subcategory if available
+                          const dept = getSelectedDepartment();
+                          if (dept) {
+                            const cat = dept.categories.find(c => c.id === value);
+                            if (cat && cat.subcategories.length > 0) {
+                              setSelectedSubcategory(cat.subcategories[0].id);
+                            } else {
+                              setSelectedSubcategory('');
+                            }
+                          }
                         }}
                       >
                         <SelectTrigger id="select-category-serv" className="w-full">
@@ -785,41 +990,60 @@ const Admin = () => {
                 
                 {selectedDepartment && selectedCategory && selectedSubcategory ? (
                   <div className="space-y-4">
-                    <h3 className="font-medium text-foreground">
-                      Services in {getSelectedSubcategory()?.name}
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-foreground">
+                        Services in {getSelectedSubcategory()?.name}
+                      </h3>
+                      <div className="relative w-64">
+                        <Input
+                          placeholder="Filter services..."
+                          value={serviceFilter}
+                          onChange={(e) => setServiceFilter(e.target.value)}
+                          className="pl-9"
+                        />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
                     
-                    {getSelectedSubcategory()?.services.map((service) => (
-                      <div key={service.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-medium text-foreground">{service.name}</h3>
-                            <p className="text-sm text-muted-foreground">{service.description}</p>
-                            {(service.link || service.contactEmail) && (
-                              <div className="text-xs text-muted-foreground mt-1 space-y-1">
-                                {service.link && <p>Link: {service.link}</p>}
-                                {service.contactEmail && <p>Contact: {service.contactEmail}</p>}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                              onClick={() => deleteService(selectedDepartment, selectedCategory, selectedSubcategory, service.id)}
-                            >
-                              <Trash className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
+                    {filteredServices.length > 0 ? (
+                      filteredServices.map((service) => (
+                        <div key={service.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-medium text-foreground">{service.name}</h3>
+                              <p className="text-sm text-muted-foreground">{service.description}</p>
+                              {(service.link || service.contactEmail) && (
+                                <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                                  {service.link && <p>Link: {service.link}</p>}
+                                  {service.contactEmail && <p>Contact: {service.contactEmail}</p>}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                                onClick={() => deleteService(selectedDepartment, selectedCategory, selectedSubcategory, service.id)}
+                              >
+                                <Trash className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-center py-4 text-muted-foreground">
+                        {serviceFilter 
+                          ? "No services match your filter" 
+                          : "No services found in this subcategory. Create your first one below."}
+                      </p>
+                    )}
                     
                     <div className="mt-6 pt-6 border-t border-border">
                       <h3 className="font-medium mb-4 text-foreground">Add New Service</h3>

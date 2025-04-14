@@ -5,13 +5,10 @@ import SearchResults from '@/components/SearchResults';
 import Header from '@/components/Header';
 import { searchServices } from '@/utils/search';
 import { Department } from '@/types/directory';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ departments: Department[], matches: number }>({ departments: [], matches: 0 });
-  const navigate = useNavigate();
 
   const handleSearch = (searchQuery: string) => {
     setQuery(searchQuery);
@@ -34,15 +31,6 @@ const Index = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Find the services you need across JIRA departments. Start by searching for keywords like "laptop", "expenses", or "contract".
           </p>
-          <div className="mt-4">
-            <Button 
-              onClick={() => navigate('/admin')}
-              variant="outline"
-              className="text-foreground hover:bg-secondary/80"
-            >
-              Admin Dashboard
-            </Button>
-          </div>
         </div>
         
         <SearchBar onSearch={handleSearch} />
