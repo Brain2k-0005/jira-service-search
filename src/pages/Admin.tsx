@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, ChevronLeft, Plus, Trash, Edit, Search, FilterIcon, ExternalLink, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockDepartments } from '@/data/mockData';
