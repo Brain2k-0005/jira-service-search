@@ -65,6 +65,7 @@ const Admin = () => {
     }
   };
   
+  // Helper functions for data management
   const addDepartment = () => {
     if (!newDepartmentName) {
       toast({
@@ -314,6 +315,7 @@ const Admin = () => {
     });
   };
   
+  // Helper functions to find objects by ID
   const getSelectedDepartment = () => departments.find(d => d.id === selectedDepartment);
   
   const getSelectedCategory = () => {
@@ -328,6 +330,7 @@ const Admin = () => {
     return cat.subcategories.find(s => s.id === selectedSubcategory);
   };
   
+  // Filter functions
   const filteredDepartments = departments.filter(dept => 
     !departmentFilter || dept.name.toLowerCase().includes(departmentFilter.toLowerCase())
   );
@@ -374,6 +377,7 @@ const Admin = () => {
     return allServices;
   };
   
+  // Filtered lists for the selected items
   const filteredCategories = selectedDepartment 
     ? getSelectedDepartment()?.categories.filter(cat => 
         !categoryFilter || cat.name.toLowerCase().includes(categoryFilter.toLowerCase())
@@ -442,6 +446,7 @@ const Admin = () => {
     );
   }
   
+  // Breadcrumb paths
   const getBreadcrumbPath = () => {
     const paths = [{ name: 'Admin', path: '/admin' }];
     
@@ -666,16 +671,15 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <div className="mb-6">
-                  <Label htmlFor="select-department" className="block mb-2">Select Department (Optional)</Label>
+                  <Label htmlFor="select-department" className="block mb-2">Select Department</Label>
                   <Select 
                     value={selectedDepartment} 
                     onValueChange={setSelectedDepartment}
                   >
                     <SelectTrigger id="select-department" className="w-full">
-                      <SelectValue placeholder="All departments" />
+                      <SelectValue placeholder="Select a department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All departments</SelectItem>
                       {departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                       ))}
@@ -737,87 +741,41 @@ const Admin = () => {
                       )}
                     </>
                   ) : (
-                    <>
-                      <h3 className="font-medium text-foreground">All Categories</h3>
-                      
-                      {getAllCategories().length > 0 ? (
-                        getAllCategories().map(({ category, department }) => (
-                          <div key={category.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                            <Breadcrumb className="mb-2 text-xs">
-                              <BreadcrumbList>
-                                <BreadcrumbItem>
-                                  <BreadcrumbPage>{department.name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                  <BreadcrumbPage>{category.name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                              </BreadcrumbList>
-                            </Breadcrumb>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h3 className="font-medium text-foreground">{category.name}</h3>
-                                <p className="text-sm text-muted-foreground">{category.description}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Department: {department.name} | Contains {category.subcategories.length} {category.subcategories.length === 1 ? 'subcategory' : 'subcategories'}
-                                </p>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-4 w-4 mr-1" />
-                                  Edit
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                                  onClick={() => deleteCategory(department.id, category.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-1" />
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center py-4 text-muted-foreground">
-                          {categoryFilter 
-                            ? "No categories match your filter" 
-                            : "No categories found. Create your first one below."}
-                        </p>
-                      )}
-                    </>
+                    <p className="text-center py-4 text-muted-foreground">
+                      Please select a department to manage its categories
+                    </p>
                   )}
                   
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <h3 className="font-medium mb-4 text-foreground">Add New Category</h3>
-                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addCategory(); }}>
-                      <div className="grid gap-2">
-                        <Label htmlFor="cat-name">Category Name</Label>
-                        <Input 
-                          id="cat-name" 
-                          placeholder="Enter category name" 
-                          value={newCategoryName}
-                          onChange={(e) => setNewCategoryName(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="cat-desc">Description</Label>
-                        <Textarea 
-                          id="cat-desc" 
-                          placeholder="Enter category description" 
-                          value={newCategoryDesc}
-                          onChange={(e) => setNewCategoryDesc(e.target.value)}
-                        />
-                      </div>
-                      <Button type="submit">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Category
-                      </Button>
-                    </form>
-                  </div>
+                  {selectedDepartment && (
+                    <div className="mt-6 pt-6 border-t border-border">
+                      <h3 className="font-medium mb-4 text-foreground">Add New Category</h3>
+                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addCategory(); }}>
+                        <div className="grid gap-2">
+                          <Label htmlFor="cat-name">Category Name</Label>
+                          <Input 
+                            id="cat-name" 
+                            placeholder="Enter category name" 
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="cat-desc">Description</Label>
+                          <Textarea 
+                            id="cat-desc" 
+                            placeholder="Enter category description" 
+                            value={newCategoryDesc}
+                            onChange={(e) => setNewCategoryDesc(e.target.value)}
+                          />
+                        </div>
+                        <Button type="submit">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Category
+                        </Button>
+                      </form>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -843,7 +801,7 @@ const Admin = () => {
               <CardContent>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <Label htmlFor="select-department-sub" className="block mb-2">Select Department (Optional)</Label>
+                    <Label htmlFor="select-department-sub" className="block mb-2">Select Department</Label>
                     <Select 
                       value={selectedDepartment} 
                       onValueChange={(value) => {
@@ -853,10 +811,9 @@ const Admin = () => {
                       }}
                     >
                       <SelectTrigger id="select-department-sub" className="w-full">
-                        <SelectValue placeholder="All departments" />
+                        <SelectValue placeholder="Select a department" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All departments</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                         ))}
@@ -866,7 +823,7 @@ const Admin = () => {
                   
                   {selectedDepartment && (
                     <div>
-                      <Label htmlFor="select-category" className="block mb-2">Select Category (Optional)</Label>
+                      <Label htmlFor="select-category" className="block mb-2">Select Category</Label>
                       <Select 
                         value={selectedCategory} 
                         onValueChange={(value) => {
@@ -875,10 +832,9 @@ const Admin = () => {
                         }}
                       >
                         <SelectTrigger id="select-category" className="w-full">
-                          <SelectValue placeholder="All categories" />
+                          <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All categories</SelectItem>
                           {getSelectedDepartment()?.categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                           ))}
@@ -948,225 +904,27 @@ const Admin = () => {
                       )}
                     </>
                   ) : (
-                    <>
-                      <h3 className="font-medium text-foreground">All Subcategories</h3>
-                      
-                      {getAllSubcategories().length > 0 ? (
-                        getAllSubcategories().map(({ subcategory, category, department }) => (
-                          <div key={subcategory.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                            <Breadcrumb className="mb-2 text-xs">
-                              <BreadcrumbList>
-                                <BreadcrumbItem>
-                                  <BreadcrumbPage>{department.name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                  <BreadcrumbPage>{category.name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                  <BreadcrumbPage>{subcategory.name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                              </BreadcrumbList>
-                            </Breadcrumb>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h3 className="font-medium text-foreground">{subcategory.name}</h3>
-                                <p className="text-sm text-muted-foreground">{subcategory.description}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Category: {category.name} | Department: {department.name} | Contains {subcategory.services.length} {subcategory.services.length === 1 ? 'service' : 'services'}
-                                </p>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-4 w-4 mr-1" />
-                                  Edit
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                                  onClick={() => deleteSubcategory(department.id, category.id, subcategory.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-1" />
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center py-4 text-muted-foreground">
-                          {subcategoryFilter 
-                            ? "No subcategories match your filter" 
-                            : "No subcategories found. Create your first one below."}
-                        </p>
-                      )}
-                    </>
-                  )}
-                  
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <h3 className="font-medium mb-4 text-foreground">Add New Subcategory</h3>
-                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addSubcategory(); }}>
-                      <div className="grid gap-2">
-                        <Label htmlFor="subcat-name">Subcategory Name</Label>
-                        <Input 
-                          id="subcat-name" 
-                          placeholder="Enter subcategory name" 
-                          value={newSubcategoryName}
-                          onChange={(e) => setNewSubcategoryName(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="subcat-desc">Description</Label>
-                        <Textarea 
-                          id="subcat-desc" 
-                          placeholder="Enter subcategory description" 
-                          value={newSubcategoryDesc}
-                          onChange={(e) => setNewSubcategoryDesc(e.target.value)}
-                        />
-                      </div>
-                      <Button type="submit">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Subcategory
-                      </Button>
-                    </form>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="services" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Services</CardTitle>
-                <CardDescription>
-                  Add, edit, or remove services within subcategories
-                </CardDescription>
-                <div className="mt-2 relative">
-                  <Input
-                    placeholder="Filter services..."
-                    value={serviceFilter}
-                    onChange={(e) => setServiceFilter(e.target.value)}
-                    className="pl-9"
-                  />
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredServices.length > 0 ? (
-                    filteredServices.map((service) => (
-                      <div key={service.id} className="p-4 border rounded-md border-border bg-card/50 hover:bg-card transition-colors">
-                        <Breadcrumb className="mb-2 text-xs">
-                          <BreadcrumbList>
-                            <BreadcrumbItem>
-                              <BreadcrumbPage>{getSelectedDepartment()?.name}</BreadcrumbPage>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                              <BreadcrumbPage>{getSelectedCategory()?.name}</BreadcrumbPage>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                              <BreadcrumbPage>{getSelectedSubcategory()?.name}</BreadcrumbPage>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                              <BreadcrumbPage>{service.name}</BreadcrumbPage>
-                            </BreadcrumbItem>
-                          </BreadcrumbList>
-                        </Breadcrumb>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium text-foreground">{service.name}</h3>
-                            <p className="text-sm text-muted-foreground">{service.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Link: {service.link || 'N/A'} | Contact Email: {service.contactEmail || 'N/A'}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                              onClick={() => deleteService(getSelectedDepartment()?.id || '', getSelectedCategory()?.id || '', getSelectedSubcategory()?.id || '', service.id)}
-                            >
-                              <Trash className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
                     <p className="text-center py-4 text-muted-foreground">
-                      {serviceFilter 
-                        ? "No services match your filter" 
-                        : "No services found in this subcategory. Create your first one below."}
+                      Please select a department and category to manage subcategories
                     </p>
                   )}
                   
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <h3 className="font-medium mb-4 text-foreground">Add New Service</h3>
-                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addService(); }}>
-                      <div className="grid gap-2">
-                        <Label htmlFor="service-name">Service Name</Label>
-                        <Input 
-                          id="service-name" 
-                          placeholder="Enter service name" 
-                          value={newServiceName}
-                          onChange={(e) => setNewServiceName(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="service-desc">Description</Label>
-                        <Textarea 
-                          id="service-desc" 
-                          placeholder="Enter service description" 
-                          value={newServiceDesc}
-                          onChange={(e) => setNewServiceDesc(e.target.value)}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="service-link">Link</Label>
-                        <Input 
-                          id="service-link" 
-                          placeholder="Enter service link" 
-                          value={newServiceLink}
-                          onChange={(e) => setNewServiceLink(e.target.value)}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="service-email">Contact Email</Label>
-                        <Input 
-                          id="service-email" 
-                          placeholder="Enter contact email" 
-                          value={newServiceEmail}
-                          onChange={(e) => setNewServiceEmail(e.target.value)}
-                        />
-                      </div>
-                      <Button type="submit">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Service
-                      </Button>
-                    </form>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  );
-};
-
-export default Admin;
+                  {selectedDepartment && selectedCategory && (
+                    <div className="mt-6 pt-6 border-t border-border">
+                      <h3 className="font-medium mb-4 text-foreground">Add New Subcategory</h3>
+                      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); addSubcategory(); }}>
+                        <div className="grid gap-2">
+                          <Label htmlFor="subcat-name">Subcategory Name</Label>
+                          <Input 
+                            id="subcat-name" 
+                            placeholder="Enter subcategory name" 
+                            value={newSubcategoryName}
+                            onChange={(e) => setNewSubcategoryName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="subcat-desc">Description</Label>
+                          <Textarea 
+                            id="subcat-desc" 
+                            placeholder
