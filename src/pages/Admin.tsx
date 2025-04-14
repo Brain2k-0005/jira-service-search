@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, ChevronLeft, Plus, Trash, Edit, Search, FilterIcon } from 'lucide-react';
+import { AlertCircle, ChevronLeft, Plus, Trash, Edit, Search, FilterIcon, ExternalLink, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockDepartments } from '@/data/mockData';
 import { toast } from '@/components/ui/use-toast';
@@ -563,6 +563,7 @@ const Admin = () => {
             <TabsTrigger value="services">Services</TabsTrigger>
           </TabsList>
           
+          {/* Departments Tab */}
           <TabsContent value="departments" className="mt-6">
             <Card>
               <CardHeader>
@@ -652,6 +653,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
           
+          {/* Categories Tab */}
           <TabsContent value="categories" className="mt-6">
             <Card>
               <CardHeader>
@@ -674,7 +676,11 @@ const Admin = () => {
                   <Label htmlFor="select-department" className="block mb-2">Select Department</Label>
                   <Select 
                     value={selectedDepartment} 
-                    onValueChange={setSelectedDepartment}
+                    onValueChange={(value) => {
+                      setSelectedDepartment(value);
+                      setSelectedCategory('');
+                      setSelectedSubcategory('');
+                    }}
                   >
                     <SelectTrigger id="select-department" className="w-full">
                       <SelectValue placeholder="Select a department" />
@@ -781,6 +787,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
           
+          {/* Subcategories Tab */}
           <TabsContent value="subcategories" className="mt-6">
             <Card>
               <CardHeader>
@@ -921,10 +928,3 @@ const Admin = () => {
                             value={newSubcategoryName}
                             onChange={(e) => setNewSubcategoryName(e.target.value)}
                             required
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="subcat-desc">Description</Label>
-                          <Textarea 
-                            id="subcat-desc" 
-                            placeholder
