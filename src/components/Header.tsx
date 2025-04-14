@@ -15,7 +15,7 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Link to="/admin">
-            <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-300 gap-1">
+            <Button variant="ghost" size="sm" className="text-muted-foreground gap-1">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Admin</span>
             </Button>

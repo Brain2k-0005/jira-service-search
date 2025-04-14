@@ -17,7 +17,7 @@ const ThemeToggle: React.FC = () => {
       size="sm" 
       onClick={toggleTheme}
       aria-label="Toggle theme"
-      className="text-gray-600 dark:text-gray-300"
+      className="text-muted-foreground hover:text-foreground"
     >
       {theme === 'dark' ? (
         <Sun className="h-4 w-4" />
