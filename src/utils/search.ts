@@ -1,10 +1,17 @@
-
 import { Department, SearchResult } from "../types/directory";
 import { mockDepartments } from "../data/mockData";
 
-// Search function to find services matching the query
-export function searchServices(query: string): SearchResult {
-  if (!query.trim()) {
+interface TagType {
+  type: 'department' | 'category' | 'subcategory';
+  id: string;
+  name: string;
+  parentId?: string;
+}
+
+// Search function to find services matching the query and tags
+export function searchServices(query: string, tags?: TagType[]): SearchResult {
+  // If no query and no tags, return empty result
+  if (!query.trim() && (!tags || tags.length === 0)) {
     return { departments: [], matches: 0 };
   }
 
@@ -91,36 +98,109 @@ export function searchServices(query: string): SearchResult {
     return { matched: false, score: 0 };
   };
 
+  // Function to check if a department matches any tag filters
+  const departmentMatchesTags = (dept: Department, tagFilters?: TagType[]): boolean => {
+    if (!tagFilters || tagFilters.length === 0) return true;
+    
+    // Check if this department is in the department filters
+    const departmentTags = tagFilters.filter(t => t.type === 'department');
+    if (departmentTags.length > 0 && !departmentTags.some(t => t.id === dept.id)) {
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Function to check if a category matches any tag filters
+  const categoryMatchesTags = (dept: Department, cat: any, tagFilters?: TagType[]): boolean => {
+    if (!tagFilters || tagFilters.length === 0) return true;
+    
+    // Check if parent department is filtered
+    const departmentTags = tagFilters.filter(t => t.type === 'department');
+    if (departmentTags.length > 0 && !departmentTags.some(t => t.id === dept.id)) {
+      return false;
+    }
+    
+    // Check if this category is in the category filters
+    const categoryTags = tagFilters.filter(t => t.type === 'category');
+    if (categoryTags.length > 0 && !categoryTags.some(t => t.id === cat.id)) {
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Function to check if a subcategory matches any tag filters
+  const subcategoryMatchesTags = (dept: Department, cat: any, subcat: any, tagFilters?: TagType[]): boolean => {
+    if (!tagFilters || tagFilters.length === 0) return true;
+    
+    // Check if parent department is filtered
+    const departmentTags = tagFilters.filter(t => t.type === 'department');
+    if (departmentTags.length > 0 && !departmentTags.some(t => t.id === dept.id)) {
+      return false;
+    }
+    
+    // Check if parent category is filtered
+    const categoryTags = tagFilters.filter(t => t.type === 'category');
+    if (categoryTags.length > 0 && !categoryTags.some(t => t.id === cat.id)) {
+      return false;
+    }
+    
+    // Check if this subcategory is in the subcategory filters
+    const subcategoryTags = tagFilters.filter(t => t.type === 'subcategory');
+    if (subcategoryTags.length > 0 && !subcategoryTags.some(t => t.id === subcat.id)) {
+      return false;
+    }
+    
+    return true;
+  };
+
   // Deep clone and filter the departments structure with improved relevance scoring
   const filteredDepartments = mockDepartments
     .map(department => {
+      // Skip departments that don't match tag filters
+      if (!departmentMatchesTags(department, tags)) {
+        return null;
+      }
+      
       // Check department name and description
-      const departmentMatch = textMatches(department.name);
-      const descriptionMatch = textMatches(department.description);
+      const departmentMatch = query.trim() ? textMatches(department.name) : { matched: false, score: 0 };
+      const descriptionMatch = query.trim() ? textMatches(department.description) : { matched: false, score: 0 };
       const departmentMatches = departmentMatch.matched || descriptionMatch.matched;
       const departmentScore = Math.max(departmentMatch.score, descriptionMatch.score);
       
       // Filter categories
       const filteredCategories = department.categories
         .map(category => {
+          // Skip categories that don't match tag filters
+          if (!categoryMatchesTags(department, category, tags)) {
+            return null;
+          }
+          
           // Check category name and description
-          const categoryMatch = textMatches(category.name);
-          const categoryDescMatch = textMatches(category.description);
+          const categoryMatch = query.trim() ? textMatches(category.name) : { matched: false, score: 0 };
+          const categoryDescMatch = query.trim() ? textMatches(category.description) : { matched: false, score: 0 };
           const categoryMatches = categoryMatch.matched || categoryDescMatch.matched;
           const categoryScore = Math.max(categoryMatch.score, categoryDescMatch.score);
           
           // Filter subcategories
           const filteredSubcategories = category.subcategories
             .map(subcategory => {
+              // Skip subcategories that don't match tag filters
+              if (!subcategoryMatchesTags(department, category, subcategory, tags)) {
+                return null;
+              }
+              
               // Check subcategory name and description
-              const subcategoryMatch = textMatches(subcategory.name);
-              const subcategoryDescMatch = textMatches(subcategory.description);
+              const subcategoryMatch = query.trim() ? textMatches(subcategory.name) : { matched: false, score: 0 };
+              const subcategoryDescMatch = query.trim() ? textMatches(subcategory.description) : { matched: false, score: 0 };
               const subcategoryMatches = subcategoryMatch.matched || subcategoryDescMatch.matched;
               const subcategoryScore = Math.max(subcategoryMatch.score, subcategoryDescMatch.score);
               
               // Filter services
               const filteredServices = subcategory.services
                 .filter(service => {
+                  if (!query.trim()) return true;
                   // Check service name and description
                   const serviceMatch = textMatches(service.name);
                   const serviceDescMatch = textMatches(service.description);
@@ -128,6 +208,7 @@ export function searchServices(query: string): SearchResult {
                 })
                 // Sort services by match score (higher scores first)
                 .sort((a, b) => {
+                  if (!query.trim()) return 0;
                   const scoreA = Math.max(
                     textMatches(a.name).score, 
                     textMatches(a.description).score
@@ -140,7 +221,7 @@ export function searchServices(query: string): SearchResult {
                 });
               
               // If any services match or the subcategory itself matches, include it
-              if (filteredServices.length > 0 || subcategoryMatches) {
+              if (filteredServices.length > 0 || subcategoryMatches || (tags && tags.some(t => t.type === 'subcategory' && t.id === subcategory.id))) {
                 totalMatches += filteredServices.length + (subcategoryMatches ? 1 : 0);
                 return {
                   ...subcategory,
@@ -152,7 +233,7 @@ export function searchServices(query: string): SearchResult {
             .filter(Boolean);
           
           // If any subcategories remain or the category itself matches, include it
-          if (filteredSubcategories.length > 0 || categoryMatches) {
+          if (filteredSubcategories.length > 0 || categoryMatches || (tags && tags.some(t => t.type === 'category' && t.id === category.id))) {
             totalMatches += categoryMatches ? 1 : 0;
             return {
               ...category,
@@ -164,7 +245,7 @@ export function searchServices(query: string): SearchResult {
         .filter(Boolean);
       
       // If any categories remain or the department itself matches, include it
-      if (filteredCategories.length > 0 || departmentMatches) {
+      if (filteredCategories.length > 0 || departmentMatches || (tags && tags.some(t => t.type === 'department' && t.id === department.id))) {
         totalMatches += departmentMatches ? 1 : 0;
         return {
           ...department,
@@ -177,6 +258,7 @@ export function searchServices(query: string): SearchResult {
 
   // Sort the departments by relevance score
   filteredDepartments.sort((a, b) => {
+    if (!query.trim()) return 0;
     const scoreA = Math.max(
       textMatches(a.name).score, 
       textMatches(a.description).score

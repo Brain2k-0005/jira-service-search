@@ -1,20 +1,36 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchBar from '@/components/SearchBar';
 import SearchResults from '@/components/SearchResults';
 import Header from '@/components/Header';
 import { searchServices } from '@/utils/search';
 import { Department } from '@/types/directory';
+import { mockDepartments } from '@/data/mockData';
+
+interface TagType {
+  type: 'department' | 'category' | 'subcategory';
+  id: string;
+  name: string;
+  parentId?: string;
+}
 
 const Index = () => {
   const [query, setQuery] = useState('');
+  const [tags, setTags] = useState<TagType[]>([]);
   const [results, setResults] = useState<{ departments: Department[], matches: number }>({ departments: [], matches: 0 });
+  const [departments, setDepartments] = useState<Department[]>([]);
 
-  const handleSearch = (searchQuery: string) => {
+  useEffect(() => {
+    // Load mock data
+    setDepartments(mockDepartments);
+  }, []);
+
+  const handleSearch = (searchQuery: string, searchTags?: TagType[]) => {
     setQuery(searchQuery);
+    setTags(searchTags || []);
     
-    if (searchQuery.trim()) {
-      const searchResults = searchServices(searchQuery);
+    if (searchQuery.trim() || (searchTags && searchTags.length > 0)) {
+      const searchResults = searchServices(searchQuery, searchTags);
       setResults(searchResults);
     } else {
       setResults({ departments: [], matches: 0 });
@@ -33,17 +49,21 @@ const Index = () => {
           </p>
         </div>
         
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar 
+          onSearch={handleSearch} 
+          departments={departments}
+        />
         
         <div className="mt-8">
           <SearchResults results={results} query={query} />
           
-          {!query && (
+          {!query && tags.length === 0 && (
             <div className="mt-12 text-center animate-fade-in">
               <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-sm border border-border">
                 <h2 className="text-xl font-semibold text-foreground mb-3">Quick Tips</h2>
                 <ul className="text-left text-muted-foreground space-y-2">
                   <li>• Search for a service by name or description</li>
+                  <li>• Add filters for Department, Category, or Subcategory</li>
                   <li>• Results are organized by department, category, and subcategory</li>
                   <li>• Click on a service to see more details and actions</li>
                   <li>• Use specific terms for better results (e.g., "request laptop" instead of just "request")</li>
