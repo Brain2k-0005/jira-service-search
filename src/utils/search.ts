@@ -1,12 +1,6 @@
 import { Department, SearchResult } from "../types/directory";
 import { mockDepartments } from "../data/mockData";
-
-interface TagType {
-  type: 'department' | 'category' | 'subcategory';
-  id: string;
-  name: string;
-  parentId?: string;
-}
+import { TagType } from "../types/search";
 
 // Search function to find services matching the query and tags
 export function searchServices(query: string, tags?: TagType[]): SearchResult {

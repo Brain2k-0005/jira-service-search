@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, X, ChevronDown } from "lucide-react";
-import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Command,
   CommandEmpty,
@@ -19,114 +18,34 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Department } from '@/types/directory';
-
-interface TagType {
-  type: 'department' | 'category' | 'subcategory';
-  id: string;
-  name: string;
-  parentId?: string;
-}
+import { TagType } from '@/types/search';
 
 interface SearchBarProps {
   onSearch: (query: string, tags?: TagType[]) => void;
   initialQuery?: string;
   departments: Department[];
+  tags: TagType[];
+  onAddTag: (tag: TagType) => void;
+  onRemoveTag: (index: number) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialQuery = '', departments }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ 
+  onSearch, 
+  initialQuery = '', 
+  departments,
+  tags,
+  onAddTag,
+  onRemoveTag
+}) => {
   const [query, setQuery] = useState(initialQuery);
-  const [tags, setTags] = useState<TagType[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [filterType, setFilterType] = useState<'department' | 'category' | 'subcategory'>('department');
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Load filters from URL on initial render
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const urlQuery = searchParams.get('q') || '';
-    const urlTags: TagType[] = [];
-    
-    searchParams.getAll('department').forEach(dep => {
-      const [id, name] = dep.split(':');
-      if (id && name) {
-        urlTags.push({ type: 'department', id, name });
-      }
-    });
-    
-    searchParams.getAll('category').forEach(cat => {
-      const [id, name, parentId] = cat.split(':');
-      if (id && name && parentId) {
-        urlTags.push({ type: 'category', id, name, parentId });
-      }
-    });
-    
-    searchParams.getAll('subcategory').forEach(subcat => {
-      const [id, name, parentId] = subcat.split(':');
-      if (id && name && parentId) {
-        urlTags.push({ type: 'subcategory', id, name, parentId });
-      }
-    });
-    
-    setQuery(urlQuery);
-    setTags(urlTags);
-    
-    if (urlQuery || urlTags.length > 0) {
-      onSearch(urlQuery, urlTags);
-    }
-  }, [location.search, onSearch]);
-
-  // Update URL when filters change
-  useEffect(() => {
-    const searchParams = new URLSearchParams();
-    
-    if (query) {
-      searchParams.set('q', query);
-    }
-    
-    tags.forEach(tag => {
-      if (tag.type === 'department') {
-        searchParams.append('department', `${tag.id}:${tag.name}`);
-      } else if (tag.type === 'category') {
-        searchParams.append('category', `${tag.id}:${tag.name}:${tag.parentId}`);
-      } else if (tag.type === 'subcategory') {
-        searchParams.append('subcategory', `${tag.id}:${tag.name}:${tag.parentId}`);
-      }
-    });
-    
-    const searchString = searchParams.toString();
-    const newUrl = searchString ? `/?${searchString}` : '/';
-    
-    // Only update if the URL would actually change
-    if (location.search !== `?${searchString}` && (location.pathname !== '/' || searchString)) {
-      navigate(newUrl, { replace: true });
-    }
-  }, [query, tags, navigate, location]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query, tags);
-  };
-
-  const addTag = (tag: TagType) => {
-    // Don't add duplicate tags
-    if (!tags.some(t => t.id === tag.id && t.type === tag.type)) {
-      const newTags = [...tags, tag];
-      setTags(newTags);
-      onSearch(query, newTags);
-    }
-    setInputValue('');
-    setOpen(false);
-    inputRef.current?.focus();
-  };
-
-  const removeTag = (index: number) => {
-    const newTags = [...tags];
-    newTags.splice(index, 1);
-    setTags(newTags);
-    onSearch(query, newTags);
+    onSearch(query);
   };
 
   // Get filtered suggestions based on current tags and input
@@ -205,7 +124,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialQuery = '', depa
               {tag.name}
               <button 
                 type="button" 
-                onClick={() => removeTag(index)}
+                onClick={() => onRemoveTag(index)}
                 className="ml-1 hover:bg-muted rounded-full p-1"
               >
                 <X className="h-3 w-3" />
@@ -260,7 +179,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialQuery = '', depa
                       {getSuggestions().map((suggestion) => (
                         <CommandItem
                           key={`${suggestion.type}-${suggestion.id}`}
-                          onSelect={() => addTag(suggestion)}
+                          onSelect={() => {
+                            onAddTag(suggestion);
+                            setInputValue('');
+                            setOpen(false);
+                            inputRef.current?.focus();
+                          }}
                         >
                           {suggestion.name}
                         </CommandItem>

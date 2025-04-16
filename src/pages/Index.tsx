@@ -1,41 +1,27 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import SearchBar from '@/components/SearchBar';
 import SearchResults from '@/components/SearchResults';
 import Header from '@/components/Header';
-import { searchServices } from '@/utils/search';
-import { Department } from '@/types/directory';
+import { useSearch } from '@/hooks/useSearch';
 import { mockDepartments } from '@/data/mockData';
 
-interface TagType {
-  type: 'department' | 'category' | 'subcategory';
-  id: string;
-  name: string;
-  parentId?: string;
-}
-
 const Index = () => {
-  const [query, setQuery] = useState('');
-  const [tags, setTags] = useState<TagType[]>([]);
-  const [results, setResults] = useState<{ departments: Department[], matches: number }>({ departments: [], matches: 0 });
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = React.useState(mockDepartments);
+  
+  const {
+    query,
+    tags,
+    results,
+    handleSearch,
+    addTag,
+    removeTag
+  } = useSearch(departments);
 
   useEffect(() => {
-    // Load mock data
+    // This simulates loading from an API
     setDepartments(mockDepartments);
   }, []);
-
-  const handleSearch = (searchQuery: string, searchTags?: TagType[]) => {
-    setQuery(searchQuery);
-    setTags(searchTags || []);
-    
-    if (searchQuery.trim() || (searchTags && searchTags.length > 0)) {
-      const searchResults = searchServices(searchQuery, searchTags);
-      setResults(searchResults);
-    } else {
-      setResults({ departments: [], matches: 0 });
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -51,7 +37,11 @@ const Index = () => {
         
         <SearchBar 
           onSearch={handleSearch} 
+          initialQuery={query}
           departments={departments}
+          tags={tags}
+          onAddTag={addTag}
+          onRemoveTag={removeTag}
         />
         
         <div className="mt-8">
